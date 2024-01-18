@@ -1,6 +1,7 @@
 import argparse
 import glob
 from pathlib import Path
+import os
 
 try:
     import open3d
@@ -59,6 +60,13 @@ class DemoDataset(DatasetTemplate):
         data_dict = self.prepare_data(data_dict=input_dict)
         return data_dict
 
+    def get_sample_filename(self, index):
+        """
+        获取指定索引的样本文件名。
+        """
+        full_path = self.sample_file_list[index]
+        return os.path.basename(full_path)
+
 
 def parse_config():
     parser = argparse.ArgumentParser(description='arg parser')
@@ -85,17 +93,23 @@ def main():
         root_path=Path(args.data_path), ext=args.ext, logger=logger
     )
     logger.info(f'Total number of samples: \t{len(demo_dataset)}')
-
     model = build_network(model_cfg=cfg.MODEL, num_class=len(cfg.CLASS_NAMES), dataset=demo_dataset)
     model.load_params_from_file(filename=args.ckpt, logger=logger, to_cpu=True)
     model.cuda()
     model.eval()
     with torch.no_grad():
         for idx, data_dict in enumerate(demo_dataset):
-            logger.info(f'Visualized sample index: \t{idx + 1}')
+            logger.info(f'可视化样本索引: \t{idx + 1}')
+            sample_filename = demo_dataset.get_sample_filename(idx)
+            logger.info(f'当前文件名: {sample_filename}')
             data_dict = demo_dataset.collate_batch([data_dict])
             load_data_to_gpu(data_dict)
             pred_dicts, _ = model.forward(data_dict)
+            logger.info(f'预测结果: {pred_dicts}')
+            if pred_dicts[0]['pred_boxes'].shape[0] == 0:
+                continue
+            else:
+                logger.info(f"有预测结果: {idx + 1}")
 
             V.draw_scenes(
                 points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
