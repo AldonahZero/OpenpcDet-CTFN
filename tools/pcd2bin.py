@@ -21,24 +21,17 @@ def pcd2bin(in_file, out_file):
     # 读取 PCD 文件
     pcd = o3d.io.read_point_cloud(in_file)
 
-    # 将点云数据转换为 NumPy 数组
+    # 将点云位置数据转换为 NumPy 数组
     points = np.asarray(pcd.points)
 
-    # 创建一个新的点云数组，包括额外的点
-    new_points = []
-    for point in points:
-        new_points.append(point)
-        # 为每个点添加四个额外的点
-        additional_points = generate_additional_points(point)
-        new_points.extend(additional_points)
+    # 调整 z 轴坐标，使原点位于地面上方约 1.6m
+    points[:, 2] += 0.6
 
-    new_points = np.array(new_points)
-
-    # 为所有点（包括额外的点）设置强度为0
-    intensity = np.zeros((new_points.shape[0], 1))
+     # 为所有点（包括额外的点）设置强度为0
+    intensity = np.zeros((points.shape[0], 1))
 
     # 合并位置和强度数据
-    data = np.hstack((new_points, intensity)).astype(np.float32)
+    data = np.hstack((points, intensity)).astype(np.float32)
 
     # 保存为 .bin 文件
     data.tofile(out_file)

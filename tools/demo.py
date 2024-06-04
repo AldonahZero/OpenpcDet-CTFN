@@ -110,6 +110,13 @@ def main():
                 continue
             else:
                 logger.info(f"有预测结果: {idx + 1}")
+                # 假设这是您的预测字典中的标签张量
+                pred_labels = pred_dicts[0]['pred_labels']
+                # 检查张量中是否有值2或3
+                # if torch.any(pred_labels == 2) or torch.any(pred_labels == 3):
+                #     logger.info(f"有行人: {idx + 1}")
+                # else: 
+                #     continue
 
             V.draw_scenes(
                 points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
